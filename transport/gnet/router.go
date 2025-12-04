@@ -3,62 +3,71 @@ package gnet
 import (
 	"context"
 	"encoding/binary"
+	"sync"
 )
 
-type Handler func(srv interface{}, ctx context.Context, s *Session, payload []byte)
-
-type MethodDesc struct {
-	Ops     uint32
-	Handler Handler
-	Impl    interface{}
+// internal router mapping ops->handler func
+type router struct {
+	mu       sync.RWMutex
+	handlers map[uint32]func(sess *Session, payload []byte)
+	// optional hooks
+	onOpen  func(*Session)
+	onClose func(*Session)
 }
 
-type ServiceDesc struct {
-	ServiceName string
-	HandlerType interface{}
-	Methods     []MethodDesc
-}
-
-type Router struct {
-	methods map[uint32]MethodDesc
-	//onOpen  func(*Session)
-	//onClose func(*Session)
-}
-
-func NewRouter() *Router {
-	return &Router{
-		methods: make(map[uint32]MethodDesc),
+func newRouter() *router {
+	return &router{
+		handlers: make(map[uint32]func(sess *Session, payload []byte)),
 	}
 }
 
-func (r *Router) AddService(desc *ServiceDesc, impl interface{}) {
-	for _, m := range desc.Methods {
-		m.Impl = impl
-		r.methods[m.Ops] = m
-	}
+func (r *router) register(ops uint32, h func(sess *Session, payload []byte)) {
+	r.mu.Lock()
+	r.handlers[ops] = h
+	r.mu.Unlock()
 }
 
-func (r *Router) Dispatch(s *Session, data []byte) {
+func (r *router) dispatch(sess *Session, data []byte) {
 	if len(data) < 4 {
+		// ignore short frames
 		return
 	}
 	ops := binary.BigEndian.Uint32(data[:4])
-	if m, ok := r.methods[ops]; ok {
-		m.Handler(m.Impl, context.Background(), s, data[4:])
+	r.mu.RLock()
+	h, ok := r.handlers[ops]
+	r.mu.RUnlock()
+	if ok && h != nil {
+		h(sess, data[4:])
 	}
 }
 
-func (r *Router) OnSessionOpen(s *Session) {
+func (r *router) OnSessionOpen(s *Session) {
 	if r.onOpen != nil {
 		r.onOpen(s)
 	}
 }
 
-func (r *Router) OnSessionClose(s *Session) {
+func (r *router) OnSessionClose(s *Session) {
 	if r.onClose != nil {
 		r.onClose(s)
 	}
 }
 
-func (r *Router) SetOpenHook(fn func(*Session))  { r.onOpen = fn }
-func (r *Router) SetCloseHook(fn func(*Session)) { r.onClose = fn }
+func (r *router) SetOpenHook(fn func(*Session))  { r.onOpen = fn }
+func (r *router) SetCloseHook(fn func(*Session)) { r.onClose = fn }
+
+// helper to register ServiceDesc (called by Server.RegisterService)
+func (r *router) addService(desc *ServiceDesc, impl interface{}) {
+	for _, m := range desc.Methods {
+		ops := m.Ops
+		// copy local for closure
+		handler := m.Handler
+		// wrap to call generated handler function
+		r.register(ops, func(sess *Session, payload []byte) {
+			// call generated wrapper with impl
+			if handler != nil {
+				handler(impl, context.Background(), sess, payload)
+			}
+		})
+	}
+}

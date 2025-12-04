@@ -1,66 +1,65 @@
 package gnet
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/panjf2000/gnet/v2"
 )
 
-// eventHandler 是 gnet TCP 事件处理器
+var _ gnet.EventHandler = (*eventHandler)(nil)
+
+// eventHandler implements gnet.EventHandler
 type eventHandler struct {
-	router *Router
+	router *router
 }
 
-// OnBoot 在 gnet 引擎启动时调用
+func newEventHandler(r *router) *eventHandler {
+	return &eventHandler{router: r}
+}
+
 func (h *eventHandler) OnBoot(eng gnet.Engine) gnet.Action {
+	fmt.Println("gnet engine boot")
 	return gnet.None
 }
 
-// OnShutdown 在 gnet 引擎关闭时调用
 func (h *eventHandler) OnShutdown(eng gnet.Engine) {
-	// 可在这里清理资源
+	fmt.Println("gnet engine shutdown")
 }
 
-// OnOpen 新连接打开时调用
 func (h *eventHandler) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {
-	session := NewSession(c)
-	h.router.OnSessionOpen(session)
+	s := NewSession(c)
+	h.router.OnSessionOpen(s)
 	return nil, gnet.None
 }
 
-// OnClose 连接关闭时调用
 func (h *eventHandler) OnClose(c gnet.Conn, err error) gnet.Action {
-	session := GetSession(c)
-	if session != nil {
-		h.router.OnSessionClose(session)
+	if s := GetSession(c); s != nil {
+		h.router.OnSessionClose(s)
 	}
 	return gnet.None
 }
 
-// OnTraffic 收到数据时调用
+// OnTraffic is invoked whenever data arrives on the connection.
 func (h *eventHandler) OnTraffic(c gnet.Conn) gnet.Action {
-	session := GetSession(c)
-	if session == nil {
-		session = NewSession(c)
+	sess := GetSession(c)
+	if sess == nil {
+		sess = NewSession(c)
 	}
 
-	// TCP 原始消息直接分发
-	msg, err := c.Read()
+	buf := make([]byte, 4096) // 4KB，你可自定义
+	n, err := c.Read(buf)
 	if err != nil {
 		return gnet.Close
 	}
 
-	h.router.Dispatch(session, msg)
+	if n > 0 {
+		h.router.dispatch(sess, buf[:n])
+	}
+
 	return gnet.None
 }
 
-// OnTick 定时任务
 func (h *eventHandler) OnTick() (time.Duration, gnet.Action) {
-	// 可做心跳或定时任务
-	return time.Second * 1, gnet.None
-}
-
-// OnInitComplete gnet 初始化完成时调用
-func (h *eventHandler) OnInitComplete(srv gnet.Server) gnet.Action {
-	return gnet.None
+	return time.Second, gnet.None
 }

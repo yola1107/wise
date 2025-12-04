@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"git.dzz.com/egame/wise/log"
+	"git.dzz.com/wise/log"
 
 	"github.com/RussellLuo/timingwheel"
 )

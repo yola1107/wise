@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"git.dzz.com/egame/wise/log"
+	"git.dzz.com/wise/log"
 
 	"github.com/panjf2000/ants/v2"
 )

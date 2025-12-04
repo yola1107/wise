@@ -11,8 +11,8 @@
 //import (
 //	"context"
 //
-//	"git.dzz.com/egame/wise/library/work"
-//	"git.dzz.com/egame/wise/transport/websocket"
+//	"git.dzz.com/wise/library/work"
+//	"git.dzz.com/wise/transport/websocket"
 //
 //	"google.golang.org/grpc/codes"
 //	"google.golang.org/grpc/status"

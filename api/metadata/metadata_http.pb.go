@@ -8,8 +8,8 @@
 //
 //import (
 //	context "context"
-//	http "git.dzz.com/egame/wise/transport/http"
-//	binding "git.dzz.com/egame/wise/transport/http/binding"
+//	http "git.dzz.com/wise/transport/http"
+//	binding "git.dzz.com/wise/transport/http/binding"
 //)
 //
 //// This is a compile-time assertion to ensure that this generated file

@@ -6,7 +6,7 @@ import (
 
 	"golang.org/x/exp/constraints"
 
-	"git.dzz.com/egame/wise/log"
+	"git.dzz.com/wise/log"
 )
 
 // ToString .

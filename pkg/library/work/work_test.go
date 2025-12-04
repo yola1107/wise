@@ -3,17 +3,17 @@ package work
 import (
 	"context"
 	"errors"
-	"os"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"git.dzz.com/egame/wise/log"
+	//"git.dzz.com/wise/log"
+
 	"github.com/stretchr/testify/require"
 )
 
 func init() {
-	log.SetLogger(log.NewStdLogger(os.Stdout))
+	//log.SetLogger(log.NewStdLogger(os.Stdout))
 }
 
 // mockExecutor 直接在 goroutine 池中执行任务

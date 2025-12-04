@@ -3,7 +3,7 @@ package event
 import (
 	"sync"
 
-	"git.dzz.com/egame/wise/log"
+	"git.dzz.com/wise/log"
 )
 
 // Handler EventHandler 事件回调函数

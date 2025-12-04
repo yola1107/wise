@@ -3,7 +3,7 @@ package xgo
 import (
 	"runtime/debug"
 
-	"git.dzz.com/egame/wise/log"
+	"git.dzz.com/wise/log"
 )
 
 func RecoverFromError(cb func(e any)) {

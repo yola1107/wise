@@ -14,12 +14,12 @@ import (
 
 const timeFmt = "2006/01/02 15:04:05.000"
 
-type Mode int32
-
 const (
 	Dev Mode = iota
 	Prod
 )
+
+type Mode int32
 
 type Config struct {
 	Mode   Mode
@@ -100,6 +100,12 @@ func encCfg(file bool) zapcore.EncoderConfig {
 		cfg.EncodeLevel = zapcore.CapitalLevelEncoder
 	}
 	return cfg
+}
+
+func Logger() *zap.Logger {
+	mu.Lock()
+	defer mu.Unlock()
+	return log
 }
 
 func Debugf(format string, args ...any) {
